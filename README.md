@@ -9,7 +9,7 @@ Este archivo permite controlar un robot con ID del 0 al 5, a una velocidad maxim
 - control xbox usb
 - Tx baste station
 
-### Velocdiades
+### Velocidades
 Los paquetes permiten una velocidad máxima de 511 por eje (no se en que unidad se encuentra).  
 
 Vel recomendada: 50
