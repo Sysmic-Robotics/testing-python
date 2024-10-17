@@ -24,6 +24,7 @@ lines = {
 ax.set_xlim(0, 100)
 ax.set_ylim(-100, 100)
 ax.legend()
+#papas fritas
 
 def init():
     for line in lines.values():
