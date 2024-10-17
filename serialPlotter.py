@@ -25,6 +25,8 @@ ax.set_xlim(0, 100)
 ax.set_ylim(-100, 100)
 ax.legend()
 #papas fritas
+if(1==1):
+    print("prueba")
 
 def init():
     for line in lines.values():
