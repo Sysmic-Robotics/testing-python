@@ -1,7 +1,8 @@
 import serial
+import serial.tools.list_ports
 import time
 
-from inputs import get_gamepad
+from inputs import get_gamepad, devices
 import math
 import threading
 import numpy as np
@@ -55,9 +56,6 @@ def formar_trozo(id_,dribb,kick, velocidad_x, velocidad_y, velocidad_th):
     b = entero_a_binario(velocidad_y,10)
     c = entero_a_binario(velocidad_th,12)
     
-    #print(a)
-    #print(b)
-    #print(c)   
     # Formar el trozo de 5 bytes
     trozo = bytearray([
         (((id_<<4)+dribb)<<1)+kick,  # Primer byte: id | dribb | kick
@@ -102,16 +100,14 @@ class XboxController(threading.Thread):
         self._monitor_thread.start()
 
 
-    def read(self): # return the buttons/triggers that you care about in this methode
-        xL = self.LeftJoystickX
-        xR = self.RightJoystickX
-        yR = self.RightJoystickY
-        return [xL, xR, yR]
+    def readInputs(self):
+        return [self.LeftJoystickX, self.RightJoystickX, self.RightJoystickY]
+
 
 
     def _monitor_controller(self):
         while True:
-            events = get_gamepad()
+            events = device.gamepads[self.index].read()
             for event in events:
                 if event.code == 'ABS_Y':
                     self.LeftJoystickY = event.state / XboxController.MAX_JOY_VAL # normalize between -1 and 1
@@ -155,9 +151,26 @@ class XboxController(threading.Thread):
                     self.DownDPad = event.state
 
 
+def aplicar_zona_muerta(valor, zona_muerta):
+    if abs(valor) < zona_muerta:
+        return 0
+    return valor
 
+def limitar_velocidad(vX, vY, Vmax):
+    magnitud = math.sqrt(vX**2 + vY**2)
+    if magnitud > Vmax:
+        factor = Vmax / magnitud
+        vX *= factor
+        vY *= factor
+    return vX, vY
 
-#####################################################################################################################################################################################################################################################################
+def detectar_puerto_serial():
+    puertos = list(serial.tools.list_ports.comports())
+    for puerto in puertos:
+        if "USB" in puerto.description or "UART" in puerto.description:
+            return puerto.device
+    raise Exception("No se encontró un puerto serial adecuado.")
+
 #############################################################################################################################################################################################################
 
 
@@ -182,13 +195,13 @@ for i in range(5):
 
 
 
-
-
-
 # Configurar el puerto serial
 puerto_serial = serial.Serial('COM9', 115200, bytesize=8, parity='N', stopbits=1, timeout=1)
 
+
 Vmax= 30
+
+zona_muerta = 5  # Define la zona muerta
 
 try:
     rID1 = int(input("Ingrese el primer ID de robot a controlar: "))
@@ -200,16 +213,17 @@ try:
     
     while True:
         # Obtener las coordenadas del punto final y el tiempo de llegada deseado
-        vels1 = joy1.read()
-        vels2 = joy2.read()
+        vels1 = joy1.readInputs()
+        vels2 = joy2.readInputs()
 
-        vX_A1 = vels1[2]
-        vY_A1 = vels1[1]
-        vTH_A1 = vels1[0]
+        vX_A1 = aplicar_zona_muerta(vels1[2], zona_muerta)
+        vY_A1 = aplicar_zona_muerta(vels1[1], zona_muerta)
+        vTH_A1 = aplicar_zona_muerta(vels1[0], zona_muerta)
 
-        vX_A2 = vels2[2]
-        vY_A2 = vels2[1]
-        vTH_A2 = vels2[0]
+        vX_A2 = aplicar_zona_muerta(vels2[2], zona_muerta)
+        vY_A2 = aplicar_zona_muerta(vels2[1], zona_muerta)
+        vTH_A2 = aplicar_zona_muerta(vels2[0], zona_muerta)
+
 
         vX1 = round(vX_A1*Vmax)
         vY1 = round(vY_A1*Vmax)
@@ -219,6 +233,10 @@ try:
         vY2 = round(vY_A2*Vmax)
         vTH2 = round(vTH_A2*Vmax)
         
+        # Limitar las velocidades para cumplir con Vmax <= sqrt(x^2 + y^2)
+        vX1, vY1 = limitar_velocidad(vX1, vY1, Vmax)
+        vX2, vY2 = limitar_velocidad(vX2, vY2, Vmax)
+
 
          # Formar los trozos con las velocidades calculadas
         trozos = []
@@ -242,7 +260,7 @@ try:
         
         puerto_serial.write(buffer)
         print("Paquete de datos enviado correctamente.")
-        time.sleep(0.6)
+        time.sleep(0.05)
         
         
 
