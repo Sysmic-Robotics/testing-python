@@ -158,7 +158,7 @@ def limitar_velocidad(vX, vY, Vmax):
 def detectar_puerto_serial():
     puertos = list(serial.tools.list_ports.comports())
     for puerto in puertos:
-        if "USB" in puerto.description or "UART" in puerto.description:
+        if "FTDI" in puerto.manufacturer:
             return puerto.device
     raise Exception("No se encontró un puerto serial adecuado.")
 
@@ -188,7 +188,7 @@ except Exception as e:
     print(f"Error: {e}")
 
 Vmax= 30
-zona_muerta = 5
+zona_muerta = 10
 
 try:
     while True:
