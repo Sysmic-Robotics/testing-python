@@ -199,7 +199,7 @@ for i in range(5):
 
 
 # Configurar el puerto serial
-#puerto_serial = serial.Serial('COM5', 115200, bytesize=8, parity='N', stopbits=1, timeout=1)
+puerto_serial = serial.Serial('COM5', 115200, bytesize=8, parity='N', stopbits=1, timeout=1)
 
 Vmax= 30
 
