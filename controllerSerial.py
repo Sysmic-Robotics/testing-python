@@ -154,7 +154,18 @@ class XboxController(object):
                 elif event.code == 'BTN_TRIGGER_HAPPY4':
                     self.DownDPad = event.state
 
+def aplicar_zona_muerta(valor, zona_muerta):
+    if abs(valor) < zona_muerta:
+        return 0
+    return valor
 
+def limitar_velocidad(vX, vY, Vmax):
+    magnitud = math.sqrt(vX**2 + vY**2)
+    if magnitud > Vmax:
+        factor = Vmax / magnitud
+        vX *= factor
+        vY *= factor
+    return int(vX), int(vY)
 
 
 
@@ -193,9 +204,18 @@ puerto_serial = serial.Serial('COM5', 115200, bytesize=8, parity='N', stopbits=1
 Vmax= 30
 
 try:
-    rID = int(input("Ingrese ID de robto a controlar: "))
-    Vmax= int(input("Ingrese velocidad maxima del robot de 0 a 512: "))
+    #rID = int(input("Ingrese ID de robto a controlar: "))
+    print("ID del robot a controlar: 0")
+    Vmax= int(input("Ingrese velocidad maxima del robot de 0 a 512 (max 150): "))
+    if Vmax > 150:
+        Vmax = 150
+    elif Vmax < 0:
+        Vmax = 0
+
     joy = XboxController()
+
+    zona_muerta = 5
+
     while True:
         # Obtener las coordenadas del punto final y el tiempo de llegada deseado
         vels = joy.read()
@@ -207,6 +227,14 @@ try:
         vX = round(vX_A*Vmax)
         vY = round(vY_A*Vmax)
         vTH = round(vTH_A*Vmax)
+
+        # aplicar zona muerta
+        vX = aplicar_zona_muerta(vX, zona_muerta)
+        vY = aplicar_zona_muerta(vY, zona_muerta)
+        vTH = aplicar_zona_muerta(vTH, zona_muerta)
+
+        # Limitar la velocidad a Vmax
+        vX, vY = limitar_velocidad(vX, vY, Vmax)
         
         if(abs(vX) < (20)):
             vX = 0
