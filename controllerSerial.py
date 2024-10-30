@@ -186,7 +186,7 @@ for i in range(5):
 
 
 
-
+s = 0
 # Configurar el puerto serial
 puerto_serial = serial.Serial('COM5', 115200, bytesize=8, parity='N', stopbits=1, timeout=1)
 
@@ -208,8 +208,17 @@ try:
         vY = round(vY_A*Vmax)
         vTH = round(vTH_A*Vmax)
         
-
+        if(abs(vX) < (20)):
+            vX = 0
+        if(abs(vY) < (20)):
+            vY = 0
+        if(abs(vTH) < (20)):
+            vTH = 0    
          # Formar los trozos con las velocidades calculadas
+        s = s+1
+        if s > 10:
+            s=0
+        vX = s
         trozos = [
         formar_trozo(0b001,0,0,vX,vY,vTH),  # Trozo 1
         formar_trozo(0b010,0,0,0,0,0),   # Trozo 2
@@ -224,6 +233,8 @@ try:
             buffer[i*5:i*5+5] = trozos[i]
         
         print(vX)
+        print(vY)
+        print(vTH)
         puerto_serial.write(buffer)
         print("Paquete de datos enviado correctamente.")
         time.sleep(0.5)
