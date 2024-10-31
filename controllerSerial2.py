@@ -157,10 +157,18 @@ def limitar_velocidad(vX, vY, Vmax):
 
 def detectar_puerto_serial():
     puertos = list(serial.tools.list_ports.comports())
-    for puerto in puertos:
-        if "FTDI" in puerto.manufacturer:
-            return puerto.device
-    raise Exception("No se encontró un puerto serial adecuado.")
+    if not puertos:
+        raise Exception("No se encontraron puertos seriales.")
+    
+    print("Puertos seriales disponibles:")
+    for i, puerto in enumerate(puertos):
+        print(f"{i}: {puerto.device} - {puerto.description}")
+    
+    seleccion = int(input("Seleccione el número del puerto que desea usar: "))
+    if 0 <= seleccion < len(puertos):
+        return puertos[seleccion].device
+    else:
+        raise Exception("Selección inválida.")
 
 buffer = bytearray(30)
 
@@ -258,11 +266,16 @@ try:
                 trozos.append(formar_trozo(i+1,0,0,vX1,vY1,vTH1))
             elif i == rID2:
                 trozos.append(formar_trozo(i+1,0,0,vX2,vY2,vTH2))
+            elif i == 2:
+                trozos.append(formar_trozo(i+1,0,0,0,0,0))
+            elif i == 3:
+                trozos.append(formar_trozo(i+1,0,0,0,0,0))
+            elif i == 4:
+                trozos.append(formar_trozo(i+1,0,0,0,0,0))
             else:
-                trozos.append(formar_trozo(0b001,0,0,0,0,0))
+                trozos.append(formar_trozo(0b110,0,0,0,0,0))
 
-        print(f"trozos: {trozos}")  # Debugging line
-
+        print("trozos: 0x", ' '.join(format(byte, '02x') for trozo in trozos for byte in trozo))
         for i in range(6):
             buffer[i*5:i*5+5] = trozos[i]
         
