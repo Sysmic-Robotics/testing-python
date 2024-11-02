@@ -91,7 +91,7 @@ class XboxController(threading.Thread):
         self._monitor_thread.start()
 
     def readInputs(self):
-        return [self.LeftJoystickX, self.RightJoystickX, self.RightJoystickY]
+        return [self.LeftJoystickX, self.RightJoystickX, self.RightJoystickY,self.RightTrigger]
 
     def _monitor_controller(self):
         while True:
@@ -224,18 +224,22 @@ try:
         vX_A1 = vels1[2]
         vY_A1 = vels1[1]
         vTH_A1 = vels1[0]
+        drib1 = vels1[3]
 
         vX_A2 = vels2[2]
         vY_A2 = vels2[1]
         vTH_A2 = vels2[0]
+        drib2 = vels2[3]
 
         vX1 = round(vX_A1*Vmax)
         vY1 = round(vY_A1*Vmax)
         vTH1 = round(vTH_A1*Vmax)
+        drib1 = round(drib1)
 
         vX2 = round(vX_A2*Vmax)
         vY2 = round(vY_A2*Vmax)
         vTH2 = round(vTH_A2*Vmax)
+        drib2 = round(drib2)
 
         vX1 = aplicar_zona_muerta(vX1, zona_muerta)
         vY1 = aplicar_zona_muerta(vY1, zona_muerta)
@@ -251,13 +255,18 @@ try:
         vX2, vY2 = limitar_velocidad(vX2, vY2, Vmax)
 
 
+        #mapear driblers entre 0 a 7 y redondear
+        drib1 = round(drib1*7)
+        drib2 = round(drib2*7)
+
+
         trozos = []
 
         for i in range(6):
             if i == rID1:
-                trozos.append(formar_trozo(i+1,0,0,vX1,vY1,vTH1))
+                trozos.append(formar_trozo(i+1,drib1,0,vX1,vY1,vTH1))
             elif i == rID2:
-                trozos.append(formar_trozo(i+1,0,0,vX2,vY2,vTH2))
+                trozos.append(formar_trozo(i+1,drib2,0,vX2,vY2,vTH2))
             else:
                 trozos.append(formar_trozo(0b001,0,0,0,0,0))
 
@@ -272,7 +281,7 @@ try:
 
         puerto_serial.write(buffer)
         print("Paquete de datos enviado correctamente.\n")
-        time.sleep(0.01)
+        time.sleep(1)
         
 except KeyboardInterrupt:
     print("\nPrograma terminado por el usuario.")
@@ -281,4 +290,7 @@ except serial.SerialException as e:
 finally:
     # Cerrar el puerto serial
     puerto_serial.close()
+
+
+
     print("Puerto serial cerrado correctamente.")
