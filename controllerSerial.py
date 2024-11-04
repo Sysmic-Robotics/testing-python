@@ -214,7 +214,8 @@ try:
 
     joy = XboxController()
 
-    zona_muerta = 5
+    zona_muerta = 20
+    
 
     while True:
         # Obtener las coordenadas del punto final y el tiempo de llegada deseado
@@ -235,21 +236,15 @@ try:
 
         # Limitar la velocidad a Vmax
         vX, vY = limitar_velocidad(vX, vY, Vmax)
-        
-        if(abs(vX) < (20)):
-            vX = 0
-        if(abs(vY) < (20)):
-            vY = 0
-        if(abs(vTH) < (20)):
-            vTH = 0    
+         
          # Formar los trozos con las velocidades calculadas
         s = s+1
         if s > 10:
             s=0
-        vX = s
+        
         trozos = [
         formar_trozo(0b001,0,0,vX,vY,vTH),  # Trozo 1
-        formar_trozo(0b010,0,0,0,0,0),   # Trozo 2
+        formar_trozo(0b010,0,0,vX,vY,vTH),   # Trozo 2
         formar_trozo(0b011,0,0,0,0,0),   # Trozo 3
         formar_trozo(0b100,0,0,0,0,0),  # Trozo 4
         formar_trozo(0b101,0,0,0,0,0),  # Trozo 5
@@ -259,13 +254,13 @@ try:
         # Insertar los trozos en el buffer
         for i in range(6):
             buffer[i*5:i*5+5] = trozos[i]
-        
+        buffer[26] = s
         print(vX)
         print(vY)
         print(vTH)
         puerto_serial.write(buffer)
         print("Paquete de datos enviado correctamente.")
-        time.sleep(0.5)
+        time.sleep(0.05)
         
         
 
