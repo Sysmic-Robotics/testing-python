@@ -50,7 +50,7 @@ def formar_trozo(id_,dribb,kick, velocidad_x, velocidad_y, velocidad_th):
     c = entero_a_binario(velocidad_th,12)
     
     trozo = bytearray([
-        (((id_ << 4) + dribb) << 1) + kick,
+        (((((id_ << 3) + dribb) << 1) + kick) << 1),
         int(a[0] + a[3:], 2),
         int(b[0] + b[3:], 2),
         int(c[0] + c[5:], 2),
@@ -91,7 +91,7 @@ class XboxController(threading.Thread):
         self._monitor_thread.start()
 
     def readInputs(self):
-        return [self.LeftJoystickX, self.RightJoystickX, self.RightJoystickY,self.RightTrigger]
+        return [self.LeftJoystickX, self.RightJoystickX, self.RightJoystickY,self.LeftBumper,self.RightBumper]
 
     def _monitor_controller(self):
         while True:
@@ -196,7 +196,7 @@ except Exception as e:
     print(f"Error: {e}")
 
 Vmax= 30
-zona_muerta = 10
+zona_muerta = 25
 
 try:
     while True:
@@ -229,15 +229,17 @@ try:
         vels1 = joy1.readInputs()
         vels2 = joy2.readInputs()
 
-        vX_A1 = vels1[2]
+        vX_A1 = -vels1[2]
         vY_A1 = vels1[1]
         vTH_A1 = vels1[0]
         drib1 = vels1[3]
+        kick1 = vels1[4]
 
-        vX_A2 = vels2[2]
+        vX_A2 = -vels2[2]
         vY_A2 = vels2[1]
         vTH_A2 = vels2[0]
         drib2 = vels2[3]
+        kick2 = vels2[4]
 
         vX1 = round(vX_A1*Vmax)
         vY1 = round(vY_A1*Vmax)
@@ -272,9 +274,9 @@ try:
 
         for i in range(6):
             if i == rID1:
-                trozos.append(formar_trozo(i+1,drib1,0,vX1,vY1,vTH1))
+                trozos.append(formar_trozo(i+1,drib1,kick1,vX1,vY1,vTH1))
             elif i == rID2:
-                trozos.append(formar_trozo(i+1,0,0,vX2,vY2,vTH2))
+                trozos.append(formar_trozo(i+1,drib2,kick2,vX2,vY2,vTH2))
             elif i == 2:
                 trozos.append(formar_trozo(i+1,0,0,0,0,0))
             elif i == 3:
@@ -288,13 +290,13 @@ try:
         for i in range(6):
             buffer[i*5:i*5+5] = trozos[i]
         
-        print(f"vX1: {vX1}, vY1: {vY1}, vTH1: {vTH1}")  # Debugging line
-        print(f"vX2: {vX2}, vY2: {vY2}, vTH2: {vTH2}")
+        print(f"vX1: {vX1}, vY1: {vY1}, vTH1: {vTH1}, drib: {drib1}, kick: {kick1}")  # Debugging line
+        print(f"vX2: {vX2}, vY2: {vY2}, vTH2: {vTH2}, drib: {drib2}, kick: {kick2}")  # Debugging line
 
 
         puerto_serial.write(buffer)
         print("Paquete de datos enviado correctamente.\n")
-        time.sleep(1)
+        time.sleep(0.01)
         
 except KeyboardInterrupt:
     print("\nPrograma terminado por el usuario.")
